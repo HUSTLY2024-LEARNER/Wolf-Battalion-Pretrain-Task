@@ -28,7 +28,8 @@ void pnp(vector<Point2f>& pnts, Mat cam, Mat dis)
         Mat rVec = cv::Mat::zeros(3, 3, CV_64FC1); // init rvec
         Mat tVec = cv::Mat::zeros(3, 1, CV_64FC1); // init tvec
         solvePnP(obj, pnts, cam, dis, rVec, tVec);
-        cout << "rVec" << rVec << endl << "tVec" << tVec;
+        cout << " [rVec] ->" << endl <<  rVec << endl;
+        cout << " [tVec] ->" << endl << tVec <<endl;
     return;
 }
 
@@ -63,9 +64,9 @@ int main()
 
     Mat image_with_line = src.clone();
 
-    vector<vector<Point2f>> vertex;//矩形框
+    vector<vector<Point2f>> vertex;//一堆矩形框 
     
-    vector<Point2f> pnts;
+    vector<Point2f> pnts;//一堆点对
     for (size_t i = 0; i < contours.size(); i++)
         {
             Scalar color = Scalar(0, 0, 255); // 红色
@@ -76,30 +77,39 @@ int main()
             //vertex.push_back(vertices);
             rect.points(vertices);
             //vertex.push_back(vertices);
+            vector<Point2f> vertex1; // 使用 vector<Point2f> 来存储矩形的顶点
             for (int j = 0; j < 4; j++)
             {
                 line(image_with_line, vertices[j], vertices[(j + 1) % 4], color, 2); // 用red框出轮廓
-                vertex[i].push_back(vertices[j]);
+                vertex1.push_back(vertices[j]);
             }
+            vertex.push_back(vertex1); // 将存储顶点的向量添加到 vertex 中
         }
     imshow("result", image_with_line);
     waitKey(0);
     Point2f target;
-    for(int i = 0; i < vertex.size(); i ++)
+    
+    for(int i = 0; i < vertex.size(); i ++) //外层向量中包含的内层向量的数量
     {
-        for(int j = i + 1; j < vertex.size(); j ++)
-        {
-            int x1 = (vertex[i][0].x - vertex[i][1].x);
-            int y1 = (vertex[i][0].y- vertex[i][1].y);
-            int x2 = (vertex[j][0].x- vertex[j][1].x);
-            int y2 = (vertex[j][0].y- vertex[j][1].y);
-            if( abs((x1 * y2 - x2 * y1) / (y1 * y2)) < 0.005)//平行
+        for(int j = 0; j < vertex.size(); j ++)
+        {   
+            if(j <= i) continue;
+            double x1 = (vertex[i][1].x - vertex[i][2].x);
+            //cout << "I am OK 0.75" << endl;
+            double y1 = (vertex[i][1].y- vertex[i][2].y);
+            double x2 = (vertex[j][1].x- vertex[j][2].x);
+            double y2 = (vertex[j][1].y- vertex[j][2].y);
+            // cout << i << " " << j<<endl;
+            // cout << x1 <<" " << y1 <<endl;
+            // cout  << x2 << " " << y2  <<endl;
+            if( abs((x1 * y2 - x2 * y1) / (y1 * y2)) < 0.013131313)//平行
             {
-                target = getMidpoint(vertex[i][0], vertex[i][1], vertex[j][0], vertex[j][1]);
-                vector<Point2f> pnts;
+                // cout << "I am OK2" << endl;
+                target = getMidpoint(vertex[i][0], vertex[i][1], vertex[j][3], vertex[j][2]);
+                vector<Point2f> pnts; //
                 
-                vector<Point2f>vertex1;
-                vertex1.push_back(vertex[i][0]);vertex1.push_back(vertex[i][1]);vertex1.push_back(vertex[j][0]);vertex1.push_back(vertex[j][0]);
+                vector<Point2f>vertex1; //
+                vertex1.push_back(vertex[i][0]);vertex1.push_back(vertex[i][1]);vertex1.push_back(vertex[j][3]);vertex1.push_back(vertex[j][2]);
                 for (int i = 0; i < 4; i++) //左上角第一个，顺时针排序
                 {
                     if (vertex1[i].x < vertex1[4].x && vertex1[i].y < vertex1[4].y)
@@ -129,3 +139,8 @@ int main()
     cout << "HELLO";
     return 0;
 }
+
+
+/*
+https://blog.csdn.net/mailzst1/article/details/83141632?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522169979389516800225583129%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=169979389516800225583129&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduend~default-2-83141632-null-null.142^v96^pc_search_result_base7&utm_term=rect.points%E5%87%BD%E6%95%B0&spm=1018.2226.3001.4187
+*/
